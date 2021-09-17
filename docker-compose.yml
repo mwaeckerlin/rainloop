@@ -5,6 +5,7 @@ services:
     build:
       context: .
       target: nginx
+      dockerfile: Dockerfile.nginx
     ports:
       - 8080:8080
   rainloop:
@@ -12,6 +13,7 @@ services:
     build:
       context: .
       target: php-fpm
+      dockerfile: Dockerfile.php-fpm
     volumes:
       - type: volume
         source: settings
