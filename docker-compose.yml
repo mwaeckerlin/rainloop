@@ -8,6 +8,8 @@ services:
       dockerfile: Dockerfile.nginx
     ports:
       - 8080:8080
+    networks:
+      - frontend
   rainloop:
     image: mwaeckerlin/rainloop:php-fpm
     build:
@@ -21,7 +23,28 @@ services:
       - type: volume
         source: data
         target: /var/lib/rainloop
+    networks:
+      - frontend
+      - backend
+  mysql:
+    image: mariadb
+    volumes:
+      - type: volume
+        source: mysql
+        target: /var/lib/mysql
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      MYSQL_DATABASE: "rainloop"
+      MYSQL_USER: "rainloop"
+      MYSQL_PASSWORD: "Ch4ng3-7h1S-Pa5SW0rd"
+    networks:
+      - backend
+
+networks:
+  frontend:
+  backend:
 
 volumes:
   settings:
   data:
+  mysql:

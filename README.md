@@ -35,3 +35,12 @@ Default user:
   - password: `12345`
 
 **Imortant:** Do not forget to change the `admin` password!
+
+
+### Database for Contacts
+
+To connect to a database, just configure it in «Contacts» settings page. With the example `docker-compose.yml`, the configuration is:
+  - Type: `MySQL`
+  - Dsn: `mysql:host=mysql;port=3306;dbname=rainloop`
+  - User: `rainloop`
+  - Password: `Ch4ng3-7h1S-Pa5SW0rd`
