@@ -1,0 +1,25 @@
+version: "3.4"
+services:
+  rainloop-proxy:
+    image: mwaeckerlin/rainloop:nginx
+    build:
+      context: .
+      target: nginx
+    ports:
+      - 8080:8080
+  rainloop:
+    image: mwaeckerlin/rainloop:php-fpm
+    build:
+      context: .
+      target: php-fpm
+    volumes:
+      - type: volume
+        source: settings
+        target: /etc/rainloop
+      - type: volume
+        source: data
+        target: /var/lib/rainloop
+
+volumes:
+  settings:
+  data:
