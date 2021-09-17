@@ -16,6 +16,7 @@ RUN tar cp \
 RUN tar cp \
     $(find /root -type l ! -exec test -e {} \; -exec echo -n "{} " \; -exec readlink {} \; | sed 's,/root\(.*\)/[^/]* \(.*\),\1/\2,') 2> /dev/null \
     | tar xpC /root/
+RUN find /root/app -name '*.php' -exec rm '{}' \;
 
 FROM mwaeckerlin/nginx as nginx-config-prepare
 FROM mwaeckerlin/very-base as nginx-config
