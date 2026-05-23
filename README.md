@@ -1,46 +1,61 @@
-# Docker image for Rainloop Community Edition
+# Docker image for SnappyMail
 
-Best to use as frontend in https://github.com/mwaeckerlin/mailservice
+SnappyMail is an actively maintained fork of RainLoop. This image replaces the
+abandoned RainLoop Community Edition with a drop-in equivalent that supports PHP 8.
 
-It creates two images:
-  1. an Nginx proxy that serves static pages and forwards PHP
-  2. a PHP FPM container that handles PHP files
+Best used as webmail frontend in https://github.com/mwaeckerlin/mailservice
+
+Two images are built:
+1. `mwaeckerlin/snappymail:nginx` — nginx proxy serving static files, forwarding PHP
+2. `mwaeckerlin/snappymail:php-fpm` — PHP-FPM container running the app
 
 Check `docker-compose.yml` for a usage example.
 
 
 ## Local Testing
 
-Just run
+```bash
+npm start
+```
 
-    docker-compose up
-
-
-Then open the page in your browser: http://localhost:8080/
+Then open: http://localhost:8080/
 
 
 ## Volumes
 
-You must permanently store:
-  - settings: `/etc/rainloop`
-  - data: `/var/lib/rainloop`
+Store permanently:
+- `data`: `/app/snappymail/data` — all configuration, accounts, cached state
 
 
 ## Configuration
 
-Install according to [the documentation on the Rainloop page](https://www.rainloop.net/docs/configuration/)
+Open the admin panel at http://localhost:8080/?admin
 
-Default user:
-  - user:     `admin`
-  - password: `12345`
+Default admin credentials:
+- User: `admin`
+- Password: `12345`
 
-**Imortant:** Do not forget to change the `admin` password!
+**Important:** Change the admin password immediately!
+
+
+### IMAP / SMTP Server
+
+In the admin panel → *Domains* → *Add domain*:
+- IMAP host: your dovecot hostname, port 143 (or 993 for TLS)
+- SMTP host: your postfix hostname, port 25 (or 587 for submission)
 
 
 ### Database for Contacts
 
-To connect to a database, just configure it in «Contacts» settings page. With the example `docker-compose.yml`, the configuration is:
-  - Type: `MySQL`
-  - Dsn: `mysql:host=mysql;port=3306;dbname=rainloop`
-  - User: `rainloop`
-  - Password: `Ch4ng3-7h1S-Pa5SW0rd`
+Admin panel → *Contacts* → configure:
+- Type: `MySQL`
+- DSN: `mysql:host=mysql;port=3306;dbname=snappymail`
+- User: `snappymail`
+- Password: `Ch4ng3-7h1S-Pa5SW0rd`
+
+
+## Migration from RainLoop
+
+SnappyMail is a direct fork of RainLoop and reads the same configuration
+and account storage format. Copy the old `/etc/rainloop` volume contents into
+the new `/app/snappymail/data` volume to carry over all settings.

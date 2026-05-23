@@ -1,6 +1,6 @@
 services:
-  rainloop-proxy:
-    image: mwaeckerlin/rainloop:nginx
+  snappymail-proxy:
+    image: mwaeckerlin/snappymail:nginx
     build:
       context: .
       target: nginx
@@ -9,22 +9,21 @@ services:
       - 8080:8080
     networks:
       - frontend
-  rainloop:
-    image: mwaeckerlin/rainloop:php-fpm
+
+  snappymail:
+    image: mwaeckerlin/snappymail:php-fpm
     build:
       context: .
       target: php-fpm
       dockerfile: Dockerfile.php-fpm
     volumes:
       - type: volume
-        source: settings
-        target: /etc/rainloop
-      - type: volume
         source: data
-        target: /var/lib/rainloop
+        target: /app/snappymail/data
     networks:
       - frontend
       - backend
+
   mysql:
     image: mariadb
     volumes:
@@ -33,8 +32,8 @@ services:
         target: /var/lib/mysql
     environment:
       MYSQL_RANDOM_ROOT_PASSWORD: "yes"
-      MYSQL_DATABASE: "rainloop"
-      MYSQL_USER: "rainloop"
+      MYSQL_DATABASE: "snappymail"
+      MYSQL_USER: "snappymail"
       MYSQL_PASSWORD: "Ch4ng3-7h1S-Pa5SW0rd"
     networks:
       - backend
@@ -43,8 +42,6 @@ networks:
   frontend:
   backend:
 
-
 volumes:
-  settings:
   data:
   mysql:

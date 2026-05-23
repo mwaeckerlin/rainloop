@@ -1,23 +1,10 @@
-FROM mwaeckerlin/very-base as build
-RUN $PKG_INSTALL rainloop-webmail php7-pdo_mysql php7-pdo_sqlite php7-pdo_pgsql php7-curl php7-iconv php7-dom
-RUN mv /usr/share/webapps/rainloop /app
-RUN $ALLOW_USER /var/lib/rainloop /etc/rainloop
-RUN tar cp \
-    /etc/ssl/certs /etc/php* /etc/rainloop \
-    /usr/lib/php*/modules \
-    /app \
-    /var/lib/rainloop \
-    | tar xpC /root/
-RUN tar cp \
-    $(for f in $(find /root -type f -executable) ; do \
-    ldd $f | sed -n 's,.* => \([^ ]*\) .*,\1,p'; \
-    done 2> /dev/null) 2> /dev/null \
-    | tar xpC /root/
-RUN tar cp \
-    $(find /root -type l ! -exec test -e {} \; -exec echo -n "{} " \; -exec readlink {} \; | sed 's,/root\(.*\)/[^/]* \(.*\),\1/\2,') 2> /dev/null \
-    | tar xpC /root/
+FROM mwaeckerlin/very-base AS build
+ADD --chmod=644 https://github.com/the-djmaze/snappymail/releases/latest/download/snappymail.tar.gz /tmp/snappymail.tar.gz
+RUN mkdir /app \
+    && tar xf /tmp/snappymail.tar.gz -C /app \
+    && rm /tmp/snappymail.tar.gz
+RUN $ALLOW_USER /app/snappymail/data
 
-FROM mwaeckerlin/php-fpm as prepare-php
-FROM prepare-php as php-fpm
-COPY --from=build /root/ /
-COPY --from=prepare-php /etc/php7/php.ini /etc/php7/php.ini
+FROM mwaeckerlin/php-fpm AS php-fpm
+COPY --from=build /app /app
+VOLUME /app/snappymail/data
