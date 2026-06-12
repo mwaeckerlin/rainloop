@@ -1,6 +1,8 @@
 FROM mwaeckerlin/very-base AS build
-ADD --chmod=644 https://github.com/the-djmaze/snappymail/releases/latest/download/snappymail.tar.gz /tmp/snappymail.tar.gz
-RUN mkdir /app \
+RUN apk add --no-cache curl \
+    && LATEST=$(curl -sI https://github.com/the-djmaze/snappymail/releases/latest | sed -n 's|.*location:.*/tag/v\([^[:space:]]*\).*|\1|p') \
+    && curl -fsSL "https://github.com/the-djmaze/snappymail/releases/download/v${LATEST}/snappymail-${LATEST}.tar.gz" -o /tmp/snappymail.tar.gz \
+    && mkdir /app \
     && tar xf /tmp/snappymail.tar.gz -C /app \
     && rm /tmp/snappymail.tar.gz
 

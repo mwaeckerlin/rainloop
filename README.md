@@ -24,7 +24,7 @@ Then open: http://localhost:8080/
 ## Volumes
 
 Store permanently:
-- `data`: `/app/snappymail/data` — all configuration, accounts, cached state
+- `data`: `/app/data` — all configuration, accounts, cached state
 
 
 ## Configuration
@@ -58,4 +58,4 @@ Admin panel → *Contacts* → configure:
 
 SnappyMail is a direct fork of RainLoop and reads the same configuration
 and account storage format. Copy the old `/etc/rainloop` volume contents into
-the new `/app/snappymail/data` volume to carry over all settings.
+the new `/app/data` volume to carry over all settings.

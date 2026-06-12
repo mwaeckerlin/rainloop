@@ -1,10 +1,21 @@
+FROM mwaeckerlin/php-fpm AS php-fpm-base
+
 FROM mwaeckerlin/very-base AS build
-ADD --chmod=644 https://github.com/the-djmaze/snappymail/releases/latest/download/snappymail.tar.gz /tmp/snappymail.tar.gz
-RUN mkdir /app \
+RUN apk add --no-cache curl \
+    && LATEST=$(curl -sI https://github.com/the-djmaze/snappymail/releases/latest | sed -n 's|.*location:.*/tag/v\([^[:space:]]*\).*|\1|p') \
+    && curl -fsSL "https://github.com/the-djmaze/snappymail/releases/download/v${LATEST}/snappymail-${LATEST}.tar.gz" -o /tmp/snappymail.tar.gz \
+    && mkdir /app \
     && tar xf /tmp/snappymail.tar.gz -C /app \
     && rm /tmp/snappymail.tar.gz
-RUN $ALLOW_USER /app/snappymail/data
+RUN $ALLOW_USER /app/data
+COPY --from=php-fpm-base /etc/php84/php-fpm.d/www.conf /root/etc/php84/php-fpm.d/www.conf
+RUN sed -i \
+    -e 's/php_admin_flag\[display_errors\] = on/php_admin_flag[display_errors] = off/' \
+    -e 's/php_admin_flag\[display_startup_errors\] = on/php_admin_flag[display_startup_errors] = off/' \
+    /root/etc/php84/php-fpm.d/www.conf && \
+    printf '\nclear_env = no\n' >> /root/etc/php84/php-fpm.d/www.conf
 
 FROM mwaeckerlin/php-fpm AS php-fpm
 COPY --from=build /app /app
-VOLUME /app/snappymail/data
+COPY --from=build /root/etc/php84/php-fpm.d/www.conf /etc/php84/php-fpm.d/www.conf
+VOLUME /app/data
