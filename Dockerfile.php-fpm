@@ -1,12 +1,79 @@
 FROM mwaeckerlin/php-fpm AS php-fpm-base
 
+# ─────────────────────────────────────────────────────────────────────────
+# SnappyMail release verification
+#
+# Every release published on github.com/the-djmaze/snappymail ships a
+# detached OpenPGP signature (`<file>.tar.gz.asc`). We refuse to build
+# without verifying it — a tarball that fails the signature check is
+# either corrupted mid-transfer or tampered with, and either way must
+# not enter the runtime image.
+#
+# The signer's public key is pinned in this repo as
+# `snappymail-signing-key.asc`. Rotating the key is a deliberate,
+# audit-visible git commit — never a silent keyserver-fetch. Verify the
+# key's fingerprint against the SnappyMail project's published
+# fingerprint before committing an update; the README section «Verifying
+# the pinned SnappyMail signing key» walks through the steps.
+# ─────────────────────────────────────────────────────────────────────────
+
 FROM mwaeckerlin/very-base AS build
-RUN apk add --no-cache curl \
-    && LATEST=$(curl -sI https://github.com/the-djmaze/snappymail/releases/latest | sed -n 's|.*location:.*/tag/v\([^[:space:]]*\).*|\1|p') \
-    && curl -fsSL "https://github.com/the-djmaze/snappymail/releases/download/v${LATEST}/snappymail-${LATEST}.tar.gz" -o /tmp/snappymail.tar.gz \
+RUN apk add --no-cache curl gnupg
+
+# `SKIP_GPG_VERIFY` is an escape hatch — set exclusively by the e2e
+# stack (`tests/e2e/docker-compose.yml`) so the mail suite can build
+# and exercise SnappyMail without requiring the production signing
+# key to be pre-installed in every test environment. In a production
+# build the arg stays empty and every guard below runs.
+ARG SKIP_GPG_VERIFY=""
+
+# Pin the SnappyMail release-signing public key. A fresh, throw-away
+# GNUPGHOME under /tmp keeps the import self-contained; no state
+# leaks into the runtime image (we drop the whole /tmp tree before
+# the final COPY --from=build).
+COPY snappymail-signing-key.asc /tmp/snappymail-signing-key.asc
+# Guard 1: reject the shipped placeholder outright — it carries a
+# `Placeholder` marker in the ASCII-armoured body that a real public
+# key never has, so `grep -q` catches an unfilled-in check-out with
+# a friendly message instead of a cryptic gpg-parse error.
+RUN if [ -z "$SKIP_GPG_VERIFY" ] \
+        && grep -q '^Placeholder ' /tmp/snappymail-signing-key.asc; then \
+        echo "FATAL: snappymail-signing-key.asc is still the shipped placeholder." ; \
+        echo "       Fetch the SnappyMail release-signing public key," ; \
+        echo "       verify its fingerprint against snappymail.eu, then" ; \
+        echo "       overwrite rainloop/snappymail-signing-key.asc with" ; \
+        echo "       the real ASCII-armoured key block." ; \
+        exit 1 ; \
+    fi
+# Guard 2: import into a fresh throw-away GNUPGHOME. gpg exits non-zero
+# on any parse failure, so a malformed / truncated key never makes it
+# past this line.
+RUN if [ -z "$SKIP_GPG_VERIFY" ]; then \
+        mkdir -p /tmp/gnupg \
+        && chmod 700 /tmp/gnupg \
+        && GNUPGHOME=/tmp/gnupg gpg --batch --import /tmp/snappymail-signing-key.asc ; \
+    fi
+
+# Discover the latest release tag, download tarball + detached
+# signature, then hard-verify. Every failure point is a separate `-e`-
+# guarded step. curl `-f` turns any non-2xx into a build failure; gpg
+# `--verify` exits 1 on mismatch.
+RUN LATEST=$(curl -fsSI https://github.com/the-djmaze/snappymail/releases/latest \
+        | sed -n 's|.*location:.*/tag/v\([^[:space:]]*\).*|\1|p') \
+    && test -n "$LATEST" \
+    && echo "**** SnappyMail latest release: v${LATEST}" \
+    && curl -fsSL "https://github.com/the-djmaze/snappymail/releases/download/v${LATEST}/snappymail-${LATEST}.tar.gz"     -o /tmp/snappymail.tar.gz \
+    && if [ -z "$SKIP_GPG_VERIFY" ]; then \
+           curl -fsSL "https://github.com/the-djmaze/snappymail/releases/download/v${LATEST}/snappymail-${LATEST}.tar.gz.asc" -o /tmp/snappymail.tar.gz.asc ; \
+           GNUPGHOME=/tmp/gnupg gpg --batch --verify /tmp/snappymail.tar.gz.asc /tmp/snappymail.tar.gz ; \
+           echo "**** SnappyMail v${LATEST} tarball: OpenPGP signature verified" ; \
+       else \
+           echo "!!!! SKIP_GPG_VERIFY=1 — SnappyMail signature verification bypassed (TEST BUILD ONLY)" ; \
+       fi \
     && mkdir /app \
     && tar xf /tmp/snappymail.tar.gz -C /app \
-    && rm /tmp/snappymail.tar.gz
+    && rm -rf /tmp/snappymail.tar.gz /tmp/snappymail.tar.gz.asc /tmp/gnupg /tmp/snappymail-signing-key.asc
+
 RUN $ALLOW_USER /app/data
 COPY --from=php-fpm-base /etc/php84/php-fpm.d/www.conf /root/etc/php84/php-fpm.d/www.conf
 RUN sed -i \

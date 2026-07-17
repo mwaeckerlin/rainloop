@@ -59,3 +59,49 @@ Admin panel → *Contacts* → configure:
 SnappyMail is a direct fork of RainLoop and reads the same configuration
 and account storage format. Copy the old `/etc/rainloop` volume contents into
 the new `/app/data` volume to carry over all settings.
+
+
+## Verifying the pinned SnappyMail signing key
+
+Every SnappyMail release published on
+[github.com/the-djmaze/snappymail](https://github.com/the-djmaze/snappymail/releases)
+ships a detached OpenPGP signature (`snappymail-<version>.tar.gz.asc`).
+`Dockerfile.php-fpm` refuses to build a tarball that does not verify
+against the pinned public key in `rainloop/snappymail-signing-key.asc`.
+
+The repository ships a **placeholder** file. Before the image builds
+the first time, replace it with the real public key:
+
+1. Download the SnappyMail release-signing key from
+   [https://snappymail.eu/](https://snappymail.eu/) (the project
+   website — GitHub's own «Verified» badge relies on a different key
+   and does not cover release tarballs).
+
+2. Import into a local keyring and read the fingerprint:
+
+   ```bash
+   gpg --import /path/to/downloaded-key.asc
+   gpg --list-keys --with-fingerprint
+   ```
+
+3. Cross-check the fingerprint against the value published on the
+   project website and on the maintainer's other public channels
+   (Mastodon, GitHub profile, release notes). Only proceed if two
+   independent sources match.
+
+4. Export ASCII-armoured and commit:
+
+   ```bash
+   gpg --armor --export <fingerprint> > rainloop/snappymail-signing-key.asc
+   git add rainloop/snappymail-signing-key.asc
+   git commit -m "Pin SnappyMail signing key <fingerprint>"
+   ```
+
+5. Rebuild: `docker compose build snappymail`. The build stage prints
+   `**** SnappyMail v<version> tarball: OpenPGP signature verified` on
+   success and aborts on any mismatch.
+
+Rotating the key later follows the same steps — a new commit replaces
+the file. Downgrading the file back to the placeholder is a security
+incident, because every subsequent build then imports whatever tarball
+GitHub serves without verification.
