@@ -82,7 +82,43 @@ RUN sed -i \
     /root/etc/php84/php-fpm.d/www.conf && \
     printf '\nclear_env = no\n' >> /root/etc/php84/php-fpm.d/www.conf
 
+# php-gnupg extension for SnappyMail's server-side OpenPGP support
+# (message signing/verification/encryption in the webmail). Alpine
+# ships no php84-pecl-gnupg package and the PECL channel serves no
+# release metadata, so the extension is compiled from the pinned
+# upstream GitHub release against php 8.4. gpgme — which the
+# extension wraps — execs the gpg binary at runtime, so the gpg CLI
+# plus its full shared-library closure comes along. musl's `ldd`
+# accepts one file per call, hence the loop.
+ARG PHP_GNUPG_VERSION=1.5.4
+# Source: the release tarball from pecl.php.net/get/ (the channel
+# metadata is broken for this package, the direct download works and
+# — unlike the GitHub archive tarball — bundles the `phpc` submodule
+# the build needs).
+RUN apk add --no-cache php84-dev gpgme-dev autoconf gcc make musl-dev gnupg curl \
+    && curl -fsSL "https://pecl.php.net/get/gnupg-${PHP_GNUPG_VERSION}.tgz" \
+        -o /tmp/php-gnupg.tar.gz \
+    && mkdir -p /tmp/php-gnupg \
+    && tar xf /tmp/php-gnupg.tar.gz -C /tmp/php-gnupg \
+    && cd "/tmp/php-gnupg/gnupg-${PHP_GNUPG_VERSION}" \
+    && phpize84 \
+    && ./configure --with-php-config=/usr/bin/php-config84 \
+    && make -j"$(nproc)" \
+    && make install \
+    && echo "extension=gnupg.so" > /etc/php84/conf.d/60_gnupg.ini \
+    && mkdir -p /root/gnupg \
+    && tar cph \
+        /usr/lib/php84/modules/gnupg.so \
+        /etc/php84/conf.d/60_gnupg.ini \
+        /usr/bin/gpg /usr/bin/gpg-agent /usr/bin/gpgconf \
+        $(for f in /usr/lib/php84/modules/gnupg.so \
+                   /usr/bin/gpg /usr/bin/gpg-agent /usr/bin/gpgconf; do \
+              ldd "$f" 2>/dev/null | sed -n 's,.* => \([^ ]*\) .*,\1,p'; \
+          done | sort -u) \
+    | tar xpC /root/gnupg/
+
 FROM mwaeckerlin/php-fpm AS php-fpm
 COPY --from=build /app /app
 COPY --from=build /root/etc/php84/php-fpm.d/www.conf /etc/php84/php-fpm.d/www.conf
+COPY --from=build /root/gnupg/ /
 VOLUME /app/data

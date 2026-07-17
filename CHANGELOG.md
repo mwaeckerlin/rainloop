@@ -1,5 +1,9 @@
 2026-07-17  Marc Wäckerlin
 
+	* Neu: OpenPGP im Webmail — die php-gnupg-Erweiterung samt
+	  gpg-Programm ist im Image enthalten; signierte Mails prüfen,
+	  eigene Mails signieren/verschlüsseln funktioniert ab sofort
+	  ohne Zusatzinstallation.
 	* Neu: Verifikation der OpenPGP-Signatur des heruntergeladenen
 	  SnappyMail-Release-Tarballs beim Docker-Build. Der öffentliche
 	  Schlüssel ist als `snappymail-signing-key.asc` im Repo gepinnt;

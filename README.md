@@ -61,6 +61,16 @@ and account storage format. Copy the old `/etc/rainloop` volume contents into
 the new `/app/data` volume to carry over all settings.
 
 
+## OpenPGP in the webmail (php-gnupg)
+
+The php-fpm image ships the `php-gnupg` extension plus the `gpg`
+binary it drives (gpgme execs gpg at runtime). SnappyMail's OpenPGP
+features — verifying signed mail, signing and encrypting outgoing
+mail with server-stored keys — work out of the box; enable them per
+user under *Settings → OpenPGP*. Client-side OpenPGP.js is available
+independently of this extension.
+
+
 ## Verifying the pinned SnappyMail signing key
 
 Every SnappyMail release published on
