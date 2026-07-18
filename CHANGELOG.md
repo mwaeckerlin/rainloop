@@ -1,3 +1,10 @@
+2026-07-18  Marc Wäckerlin
+
+	* The build now accepts an optional `SKIP_GPG_VERIFY` build argument.
+	  It is empty by default, so release-signature verification stays
+	  fully enforced; only automated test harnesses set it to bypass the
+	  check when they ship a placeholder signing key.
+
 2026-07-17  Marc Wäckerlin
 
 	* New: OpenPGP in webmail — the php-gnupg extension together with

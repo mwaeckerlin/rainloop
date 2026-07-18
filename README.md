@@ -115,3 +115,8 @@ Rotating the key later follows the same steps — a new commit replaces
 the file. Downgrading the file back to the placeholder is a security
 incident, because every subsequent build then imports whatever tarball
 GitHub serves without verification.
+
+The build accepts an optional `SKIP_GPG_VERIFY` build argument that
+disables this check. It is empty by default (verification enforced) and
+exists solely for automated test harnesses that build against the
+placeholder key — never set it for a production image.

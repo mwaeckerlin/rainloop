@@ -16,6 +16,11 @@ services:
       context: .
       target: php-fpm
       dockerfile: Dockerfile.php-fpm
+      args:
+        # empty by default → full release-signature verification. Test
+        # harnesses (mailservice e2e) export SKIP_GPG_VERIFY=1 before
+        # building because they ship the placeholder signing key.
+        SKIP_GPG_VERIFY: "${SKIP_GPG_VERIFY:-}"
     volumes:
       - type: volume
         source: data
