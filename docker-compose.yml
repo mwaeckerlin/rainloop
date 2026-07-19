@@ -5,6 +5,10 @@ services:
       context: .
       target: nginx
       dockerfile: Dockerfile.nginx
+      args:
+        # empty by default → full release-signature verification, same
+        # contract as the php-fpm image below
+        SKIP_GPG_VERIFY: "${SKIP_GPG_VERIFY:-}"
     ports:
       - 8080:8080
     networks:
@@ -22,9 +26,11 @@ services:
         # building because they ship the placeholder signing key.
         SKIP_GPG_VERIFY: "${SKIP_GPG_VERIFY:-}"
     volumes:
+      # /app/data is the declared data volume of the php-fpm image
+      # (see Dockerfile.php-fpm) — the mailservice e2e pins this path
       - type: volume
         source: data
-        target: /app/snappymail/data
+        target: /app/data
     networks:
       - frontend
       - backend

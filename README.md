@@ -76,8 +76,11 @@ independently of this extension.
 Every SnappyMail release published on
 [github.com/the-djmaze/snappymail](https://github.com/the-djmaze/snappymail/releases)
 ships a detached OpenPGP signature (`snappymail-<version>.tar.gz.asc`).
-`Dockerfile.php-fpm` refuses to build a tarball that does not verify
-against the pinned public key in `rainloop/snappymail-signing-key.asc`.
+BOTH images refuse to build a tarball that does not verify against the
+pinned public key in `rainloop/snappymail-signing-key.asc` —
+`Dockerfile.php-fpm` (the backend) and `Dockerfile.nginx` (the static
+tree, i.e. all JavaScript the browser executes). Pinned by
+`tests/build-verification.sh` (`npm test`).
 
 The repository ships a **placeholder** file. Before the image builds
 the first time, replace it with the real public key:
