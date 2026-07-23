@@ -1,0 +1,15 @@
+# Tiny init image that syncs the bundled SnappyMail plugin(s) into the
+# SnappyMail data volume and enables them. The SnappyMail php-fpm image
+# is headless (no shell), and plugins must live in the data volume
+# (APP_PLUGINS_PATH = <data>/_data_/_default_/plugins/), so this
+# shell-capable helper does the one-time install/enable on start-up.
+#
+# Used by both the e2e stack and the production compose as an init
+# container against the same snappymail data volume; idempotent.
+FROM mwaeckerlin/very-base
+
+COPY plugins/transport-security /opt/snappymail-plugins/transport-security
+COPY install-plugins.sh /usr/local/bin/install-plugins.sh
+RUN chmod +x /usr/local/bin/install-plugins.sh
+
+ENTRYPOINT ["/usr/local/bin/install-plugins.sh"]

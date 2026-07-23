@@ -45,6 +45,26 @@ In the admin panel → *Domains* → *Add domain*:
 - SMTP host: your postfix hostname, port 25 (or 587 for submission)
 
 
+## Transport-security plugin
+
+The image bundles a SnappyMail plugin (`plugins/transport-security/`)
+that marks how securely each incoming mail was transported. It reads the
+`X-Transport-Security` header the mailservice MX stamps on every incoming
+mail and shows, at the top of the opened message, a red «UNENCRYPTED»
+banner for a cleartext hop, an orange banner for an obsolete TLS version,
+and nothing for TLS 1.2+.
+
+SnappyMail loads plugins from the data volume, and the php-fpm image is
+headless, so the plugin ships staged at `/opt/snappymail-plugins/` and is
+installed into the data volume and enabled by the init container built
+from `Dockerfile.plugin-init` (`install-plugins.sh`) — run it against the
+same `snappymail-data` volume before starting the app (see
+`mwaeckerlin/mailservice`'s `docker-compose.local.yml` for the wiring).
+Pinned by the mailservice e2e suite (`test_webui.py`): the red banner
+appears for a plaintext-delivered mail and is absent for a TLS-submitted
+one.
+
+
 ### Database for Contacts
 
 Admin panel → *Contacts* → configure:
@@ -69,6 +89,26 @@ features — verifying signed mail, signing and encrypting outgoing
 mail with server-stored keys — work out of the box; enable them per
 user under *Settings → OpenPGP*. Client-side OpenPGP.js is available
 independently of this extension.
+
+**Headless deviation — the extension is preferred over upstream's CLI
+backend (`WORKAROUND` in `Dockerfile.php-fpm`):** SnappyMail's GnuPG
+factory prefers its CLI backend, which spawns the `gpg` binary through
+a string `proc_open()` — PHP runs those via `/bin/sh`, and the
+hardened image deliberately ships no shell. Unpatched, the CLI backend
+looks available (the `gpg` binary exists for gpgme) but every
+operation fails, so server-side OpenPGP would be silently dead while
+the shipped extension sits unused. On top of that, upstream
+hard-disables its php-gnupg backend (over passphrase-handling issues
+of pre-1.5 extension versions; this image pins 1.5.4, which has
+loopback-pinentry support). The image therefore patches both at build
+time: the php-gnupg extension (gpgme execs `gpg` directly, no shell
+involved) is re-enabled and preferred, the CLI stays as fallback for
+shell-ful setups. The whole user path — key import,
+signing, encrypting, decrypting, verifying in the webmail — is pinned
+by the mailservice end-to-end suite (`tests/e2e/test_openpgp.py`).
+Remove the patch when upstream's CLI backend works without a shell or
+the order becomes configurable (anchor-greps fail the build loudly on
+any upstream change to the factory).
 
 
 ## Verifying the pinned SnappyMail signing key

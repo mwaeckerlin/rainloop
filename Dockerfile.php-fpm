@@ -74,6 +74,52 @@ RUN LATEST=$(curl -fsSI https://github.com/the-djmaze/snappymail/releases/latest
     && tar xf /tmp/snappymail.tar.gz -C /app \
     && rm -rf /tmp/snappymail.tar.gz /tmp/snappymail.tar.gz.asc /tmp/gnupg /tmp/snappymail-signing-key.asc
 
+# ─── WORKAROUND: make the php-gnupg (PECL) backend usable and preferred ──
+# Two upstream obstacles kill server-side OpenPGP in a headless image:
+#   1. SnappyMail's GnuPG factory prefers its CLI backend (spawns the
+#      gpg binary through string proc_open / shell_exec, which PHP runs
+#      via /bin/sh) and only falls back to the php-gnupg extension. This
+#      image is deliberately shell-free, so the CLI backend "exists"
+#      (gpg binary present) but every operation fails silently.
+#   2. The PECL backend is hard-disabled upstream (`return false && …`
+#      in pecl.php::isSupported) over passphrase-handling issues of old
+#      extension versions — the guard right next to it demands >= 1.5,
+#      the line that added loopback-pinentry support. This image pins
+#      php-gnupg 1.5.4 (see PHP_GNUPG_VERSION above), so the concern
+#      does not apply here.
+# Patch both: re-enable the PECL check and swap the two branches of
+# snappymail/pgp/gnupg.php::getInstance so the extension (gpgme execs
+# gpg directly, no shell needed) is preferred; the CLI stays as fallback
+# for shell-ful setups. Pinned end-to-end (import, sign, encrypt,
+# decrypt, verify) by tests/e2e/test_openpgp.py (mailservice).
+#
+# Remove when: upstream re-enables the PECL backend, or runs its CLI
+#              backend without a shell (array-form proc_open).
+# Added:    2026-07-20     Review-by: 2026-08-19 (30 days)
+# Register: see README.md «OpenPGP in the webmail (php-gnupg)».
+# Self-cleaning: the anchor greps below fail the build loudly if a new
+# SnappyMail release changes the factory — forcing this patch to be
+# re-evaluated instead of silently no-opping.
+RUN GNUPG_PHP=$(ls /app/snappymail/v/*/app/libraries/snappymail/pgp/gnupg.php) \
+    && PECL_PHP=$(ls /app/snappymail/v/*/app/libraries/snappymail/pgp/pecl.php) \
+    && grep -q 'return false && \\class_exists' "$PECL_PHP" \
+    && sed -i 's/return false && \\class_exists/return \\class_exists/' "$PECL_PHP" \
+    && grep -q 'if (GPG::isSupported()) {' "$GNUPG_PHP" \
+    && sed -i \
+        -e 's/if (GPG::isSupported()) {/if (__CLIGPG__::isSupported()) {/' \
+        -e 's/static::\$instance = new GPG(\$homedir);/static::$instance = new __CLIGPG__($homedir);/' \
+        -e 's/else if (PECL::isSupported()) {/else if (GPG::isSupported()) {/' \
+        -e 's/static::\$instance = new PECL(\$homedir);/static::$instance = new GPG($homedir);/' \
+        -e 's/if (__CLIGPG__::isSupported()) {/if (PECL::isSupported()) {/' \
+        -e 's/static::\$instance = new __CLIGPG__(\$homedir);/static::$instance = new PECL($homedir);/' \
+        "$GNUPG_PHP" \
+    && grep -q 'if (PECL::isSupported()) {' "$GNUPG_PHP" \
+    && echo "**** SnappyMail GnuPG backend patched: PECL (php-gnupg) enabled + preferred"
+
+# Bake the transport-security plugin into the shipped plugin directory
+# (served through php-fpm's plugin route, so it needs to be in the app
+# tree, not only the data volume). The version directory is dynamic, so
+# resolve it; fail loudly if the layout ever changes.
 RUN $ALLOW_USER /app/data
 COPY --from=php-fpm-base /etc/php84/php-fpm.d/www.conf /root/etc/php84/php-fpm.d/www.conf
 RUN sed -i \
@@ -121,4 +167,10 @@ FROM mwaeckerlin/php-fpm AS php-fpm
 COPY --from=build /app /app
 COPY --from=build /root/etc/php84/php-fpm.d/www.conf /etc/php84/php-fpm.d/www.conf
 COPY --from=build /root/gnupg/ /
+# SnappyMail loads plugins from the DATA directory
+# (APP_PLUGINS_PATH = <data>/_data_/_default_/plugins/), a mounted
+# volume at runtime — so the plugin ships at a non-volume staging path
+# and an init step (production compose / e2e snappymail-init) syncs it
+# into the data volume and enables it on start.
+COPY plugins/transport-security /opt/snappymail-plugins/transport-security
 VOLUME /app/data

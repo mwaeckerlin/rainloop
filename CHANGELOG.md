@@ -1,5 +1,30 @@
 # Changelog
 
+- 2026-07-20 **server-side OpenPGP fixed in the headless image**
+    - Server-side OpenPGP actually works now. SnappyMail prefers its
+      CLI GnuPG backend, which needs a shell the hardened image
+      deliberately does not ship — every key operation failed silently
+      while the bundled php-gnupg extension sat unused (upstream even
+      hard-disables it over passphrase issues of pre-1.5 extension
+      versions; this image pins 1.5.4). The image now re-enables the
+      extension backend and prefers it at build time; the whole
+      webmail flow — import,
+      sign, encrypt, decrypt, verify — is pinned by the mailservice
+      end-to-end suite. This also removes the shell-related PHP
+      warnings and lingering per-user gpg-agent processes of the CLI
+      attempts.
+
+- 2026-07-20 **transport-security plugin**
+    - Ships a SnappyMail plugin that marks how securely each incoming
+      mail was transported: it reads the `X-Transport-Security` header
+      (stamped by the mailservice MX) for the opened message and shows a
+      red «UNENCRYPTED» banner for a cleartext hop, orange for an
+      obsolete TLS version, and nothing for TLS 1.2+. The plugin is
+      bundled in the image and installed into the data volume + enabled
+      by an init container (`Dockerfile.plugin-init` / `install-plugins.sh`).
+      Pinned by e2e tests (`test_webui.py`): the red banner appears for a
+      plaintext-delivered mail and is absent for a TLS-submitted one.
+
 - 2026-07-18 **security hardening**
     - Release-signature verification now covers BOTH images: the nginx
       image serves the complete static tree — all JavaScript the

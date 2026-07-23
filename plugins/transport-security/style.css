@@ -1,0 +1,29 @@
+.transport-security {
+	margin: 0 0 0.5rem 0;
+	padding: 0.5rem 0.75rem;
+	border-radius: 0.25rem;
+	border-left: 0.25rem solid currentColor;
+	font-weight: 600;
+	font-size: 0.9rem;
+}
+
+.transport-insecure {
+	color: #b00020;
+	background: #fdecea;
+}
+
+.transport-weak {
+	color: #8a5300;
+	background: #fff4e5;
+}
+
+@media (prefers-color-scheme: dark) {
+	.transport-insecure {
+		color: #ff6b6b;
+		background: #3a1113;
+	}
+	.transport-weak {
+		color: #ffb057;
+		background: #3a2a10;
+	}
+}
