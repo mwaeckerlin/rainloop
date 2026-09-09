@@ -6,6 +6,6 @@ RUN apk add --no-cache curl \
     && tar xf /tmp/snappymail.tar.gz -C /app \
     && rm /tmp/snappymail.tar.gz
 
-FROM mwaeckerlin/nginx
+FROM mwaeckerlin/nginx AS nginx
 ENV PHP_FPM_HOST "snappymail"
 COPY --from=build /app /app
