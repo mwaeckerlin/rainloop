@@ -1,0 +1,10 @@
+{
+  "name": "@mwaeckerlin/snappymail",
+  "version": "1.11.0",
+  "scripts": {
+    "build": "docker compose build",
+    "start": "docker compose up --build --force-recreate --remove-orphans",
+    "start:daemon": "docker compose up -d --build --force-recreate --remove-orphans",
+    "stop": "docker compose down"
+  }
+}
