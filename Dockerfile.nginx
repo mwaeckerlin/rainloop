@@ -44,9 +44,9 @@ RUN LATEST=$(curl -fsSI https://github.com/the-djmaze/snappymail/releases/latest
     && echo "**** SnappyMail latest release: v${LATEST}" \
     && curl -fsSL "https://github.com/the-djmaze/snappymail/releases/download/v${LATEST}/snappymail-${LATEST}.tar.gz"     -o /tmp/snappymail.tar.gz \
     && if [ -z "$SKIP_GPG_VERIFY" ]; then \
-           curl -fsSL "https://github.com/the-djmaze/snappymail/releases/download/v${LATEST}/snappymail-${LATEST}.tar.gz.asc" -o /tmp/snappymail.tar.gz.asc ; \
-           GNUPGHOME=/tmp/gnupg gpg --batch --verify /tmp/snappymail.tar.gz.asc /tmp/snappymail.tar.gz ; \
-           echo "**** SnappyMail v${LATEST} tarball: OpenPGP signature verified" ; \
+           curl -fsSL "https://github.com/the-djmaze/snappymail/releases/download/v${LATEST}/snappymail-${LATEST}.tar.gz.asc" -o /tmp/snappymail.tar.gz.asc \
+           && GNUPGHOME=/tmp/gnupg gpg --batch --verify /tmp/snappymail.tar.gz.asc /tmp/snappymail.tar.gz \
+           && echo "**** SnappyMail v${LATEST} tarball: OpenPGP signature verified" ; \
        else \
            echo "!!!! SKIP_GPG_VERIFY=1 — SnappyMail signature verification bypassed (TEST BUILD ONLY)" ; \
        fi \

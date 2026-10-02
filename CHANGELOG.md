@@ -1,5 +1,19 @@
 # Changelog
 
+- 2026-10-02 **3.5.1**
+    - The webmail images build again. Every build had stopped at the
+      release-signature check, because the shipped file held a
+      placeholder instead of the signing key. The key is in place now,
+      taken from a keyserver that is independent of the download site
+      and present there since February 2022, more than two years before
+      the signature it verifies. One point stays open and is written
+      into the file itself: the fingerprint is not yet confirmed against
+      a statement of the SnappyMail project, so the check protects
+      against a tampered or damaged download and does not prove who owns
+      the key.
+    - The PHP version is no longer written into the build. It is read
+      from the system while building, so a new PHP in the base image no
+      longer breaks the build, which is what had happened.
 - 2026-07-20 **server-side OpenPGP fixed in the headless image**
     - Server-side OpenPGP actually works now. SnappyMail prefers its
       CLI GnuPG backend, which needs a shell the hardened image
