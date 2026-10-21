@@ -1,5 +1,8 @@
 # Changelog
 
+- 2026-10-21 **3.5.2**
+    - The weekly rebuild also starts the version line 1, published as `mwaeckerlin/rainloop:php-fpm-1` and `nginx-1`, which until now got no rebuild and so no security fix of its base image
+
 - 2026-10-02 **3.5.1**
     - The webmail images build again. Every build had stopped at the
       release-signature check, because the shipped file held a
