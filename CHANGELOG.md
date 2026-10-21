@@ -1,5 +1,8 @@
 # Changelog
 
+- 2026-10-21 **3.5.4**
+    - php-gnupg comes in its latest release through `install-php-extensions` instead of a fixed version 1.5.4
+
 - 2026-10-21 **3.5.3**
     - php-gnupg is compiled against the official PHP of `mwaeckerlin/php-fpm` 1.2.6 instead of the Alpine PHP packages, so server-side OpenPGP in the webmail keeps working on the new base; a test measures that php-fpm loads the module
 

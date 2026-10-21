@@ -99,8 +99,8 @@ looks available (the `gpg` binary exists for gpgme) but every
 operation fails, so server-side OpenPGP would be silently dead while
 the shipped extension sits unused. On top of that, upstream
 hard-disables its php-gnupg backend (over passphrase-handling issues
-of pre-1.5 extension versions; this image pins 1.5.4, which has
-loopback-pinentry support). The image therefore patches both at build
+of pre-1.5 extension versions; this image builds the latest release,
+which has loopback-pinentry support). The image therefore patches both at build
 time: the php-gnupg extension (gpgme execs `gpg` directly, no shell
 involved) is re-enabled and preferred, the CLI stays as fallback for
 shell-ful setups. The whole user path — key import,

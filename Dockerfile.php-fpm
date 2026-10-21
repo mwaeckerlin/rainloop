@@ -82,9 +82,8 @@ RUN LATEST=$(curl -fsSI https://github.com/the-djmaze/snappymail/releases/latest
 #   2. The PECL backend is hard-disabled upstream (`return false && …`
 #      in pecl.php::isSupported) over passphrase-handling issues of old
 #      extension versions — the guard right next to it demands >= 1.5,
-#      the line that added loopback-pinentry support. This image pins
-#      php-gnupg 1.5.4 (see PHP_GNUPG_VERSION above), so the concern
-#      does not apply here.
+#      the line that added loopback-pinentry support. This image builds
+#      the latest php-gnupg, so the concern does not apply here.
 # Patch both: re-enable the PECL check and swap the two branches of
 # snappymail/pgp/gnupg.php::getInstance so the extension (gpgme execs
 # gpg directly, no shell needed) is preferred; the CLI stays as fallback
@@ -123,17 +122,10 @@ RUN $ALLOW_USER /app/data
 # php-gnupg for SnappyMail's server-side OpenPGP, compiled against the PHP
 # of mwaeckerlin/php-fpm; gpgme execs the gpg binary, so it comes along.
 FROM php:fpm-alpine AS gnupg
-ARG PHP_GNUPG_VERSION=1.5.4
-RUN apk add --no-cache gpgme-dev autoconf gcc make musl-dev gnupg curl \
-    && curl -fsSL "https://pecl.php.net/get/gnupg-${PHP_GNUPG_VERSION}.tgz" -o /tmp/php-gnupg.tar.gz \
-    && mkdir -p /tmp/php-gnupg \
-    && tar xf /tmp/php-gnupg.tar.gz -C /tmp/php-gnupg \
-    && cd "/tmp/php-gnupg/gnupg-${PHP_GNUPG_VERSION}" \
-    && phpize \
-    && ./configure \
-    && make -j"$(nproc)" \
-    && make install \
-    && docker-php-ext-enable gnupg \
+ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions \
+    /usr/local/bin/install-php-extensions
+RUN apk add --no-cache gnupg \
+    && install-php-extensions gnupg \
     && mkdir -p /root/gnupg \
     && tar cph \
         "$(php-config --extension-dir)/gnupg.so" \
