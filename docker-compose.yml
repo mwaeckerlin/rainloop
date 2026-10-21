@@ -1,6 +1,6 @@
 services:
   snappymail-proxy:
-    image: mwaeckerlin/snappymail:nginx
+    image: mwaeckerlin/rainloop:nginx
     build:
       context: .
       target: nginx
@@ -11,7 +11,7 @@ services:
       - frontend
 
   snappymail:
-    image: mwaeckerlin/snappymail:php-fpm
+    image: mwaeckerlin/rainloop:php-fpm
     build:
       context: .
       target: php-fpm

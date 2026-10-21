@@ -1,10 +1,12 @@
 {
   "name": "@mwaeckerlin/snappymail",
-  "version": "1.11.0",
+  "version": "1.11.1",
   "scripts": {
     "build": "docker compose build",
     "start": "docker compose up --build --force-recreate --remove-orphans",
     "start:daemon": "docker compose up -d --build --force-recreate --remove-orphans",
-    "stop": "docker compose down"
+    "stop": "docker compose down",
+    "deploy": "docker compose push snappymail snappymail-proxy",
+    "test": "bash tests/config-contract.sh mwaeckerlin/rainloop:php-fpm"
   }
 }
