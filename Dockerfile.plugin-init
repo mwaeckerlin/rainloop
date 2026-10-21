@@ -2,12 +2,16 @@
 # SnappyMail data volume and enables them. The SnappyMail php-fpm image
 # is headless (no shell), and plugins must live in the data volume
 # (APP_PLUGINS_PATH = <data>/_data_/_default_/plugins/), so this
-# shell-capable helper does the one-time install/enable on start-up.
+# shell-capable helper does the one-time install/enable on start-up,
+# and writes the admin password and the IMAP/SMTP servers of a domain
+# from the environment (see install-plugins.sh).
 #
 # Used by both the e2e stack and the production compose as an init
 # container against the same snappymail data volume; idempotent.
 FROM mwaeckerlin/very-base
 
+# htpasswd hashes SNAPPYMAIL_ADMIN_PASSWORD with bcrypt.
+RUN $PKG_INSTALL apache2-utils
 COPY plugins/transport-security /opt/snappymail-plugins/transport-security
 COPY install-plugins.sh /usr/local/bin/install-plugins.sh
 RUN chmod +x /usr/local/bin/install-plugins.sh

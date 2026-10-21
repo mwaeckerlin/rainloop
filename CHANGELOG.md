@@ -1,5 +1,10 @@
 # Changelog
 
+- 2026-10-22 **3.5.5**
+    - The init container sets the admin password from `SNAPPYMAIL_ADMIN_PASSWORD`, stored as a bcrypt hash
+    - With `DOMAIN`, it writes the IMAP and SMTP server of that mail domain from `IMAP_HOST`, `IMAP_PORT`, `IMAP_SECURE`, `SMTP_HOST`, `SMTP_PORT` and `SMTP_SECURE`, so a new deployment no longer needs the admin interface for it
+    - Every variable is applied only while it is set: an unset one leaves what the admin interface stored, and a test checks both cases in the data volume
+
 - 2026-10-21 **3.5.4**
     - php-gnupg comes in its latest release through `install-php-extensions` instead of a fixed version 1.5.4
 
@@ -10,86 +15,29 @@
     - The weekly rebuild also starts the version line 1, published as `mwaeckerlin/rainloop:php-fpm-1` and `nginx-1`, which until now got no rebuild and so no security fix of its base image
 
 - 2026-10-02 **3.5.1**
-    - The webmail images build again. Every build had stopped at the
-      release-signature check, because the shipped file held a
-      placeholder instead of the signing key. The key is in place now,
-      taken from a keyserver that is independent of the download site
-      and present there since February 2022, more than two years before
-      the signature it verifies. One point stays open and is written
-      into the file itself: the fingerprint is not yet confirmed against
-      a statement of the SnappyMail project, so the check protects
-      against a tampered or damaged download and does not prove who owns
-      the key.
-    - The PHP version is no longer written into the build. It is read
-      from the system while building, so a new PHP in the base image no
-      longer breaks the build, which is what had happened.
+    - The webmail images build again. Every build had stopped at the release-signature check, because the shipped file held a placeholder instead of the signing key. The key is in place now, taken from a keyserver that is independent of the download site and present there since February 2022, more than two years before the signature it verifies. One point stays open and is written into the file itself: the fingerprint is not yet confirmed against a statement of the SnappyMail project, so the check protects against a tampered or damaged download and does not prove who owns the key.
+    - The PHP version is no longer written into the build. It is read from the system while building, so a new PHP in the base image no longer breaks the build, which is what had happened.
 - 2026-07-20 **server-side OpenPGP fixed in the headless image**
-    - Server-side OpenPGP actually works now. SnappyMail prefers its
-      CLI GnuPG backend, which needs a shell the hardened image
-      deliberately does not ship — every key operation failed silently
-      while the bundled php-gnupg extension sat unused (upstream even
-      hard-disables it over passphrase issues of pre-1.5 extension
-      versions; this image pins 1.5.4). The image now re-enables the
-      extension backend and prefers it at build time; the whole
-      webmail flow — import,
-      sign, encrypt, decrypt, verify — is pinned by the mailservice
-      end-to-end suite. This also removes the shell-related PHP
-      warnings and lingering per-user gpg-agent processes of the CLI
-      attempts.
+    - Server-side OpenPGP actually works now. SnappyMail prefers its CLI GnuPG backend, which needs a shell the hardened image deliberately does not ship — every key operation failed silently while the bundled php-gnupg extension sat unused (upstream even hard-disables it over passphrase issues of pre-1.5 extension versions; this image pins 1.5.4). The image now re-enables the extension backend and prefers it at build time; the whole webmail flow — import, sign, encrypt, decrypt, verify — is pinned by the mailservice end-to-end suite. This also removes the shell-related PHP warnings and lingering per-user gpg-agent processes of the CLI attempts.
 
 - 2026-07-20 **transport-security plugin**
-    - Ships a SnappyMail plugin that marks how securely each incoming
-      mail was transported: it reads the `X-Transport-Security` header
-      (stamped by the mailservice MX) for the opened message and shows a
-      red «UNENCRYPTED» banner for a cleartext hop, orange for an
-      obsolete TLS version, and nothing for TLS 1.2+. The plugin is
-      bundled in the image and installed into the data volume + enabled
-      by an init container (`Dockerfile.plugin-init` / `install-plugins.sh`).
-      Pinned by e2e tests (`test_webui.py`): the red banner appears for a
-      plaintext-delivered mail and is absent for a TLS-submitted one.
+    - Ships a SnappyMail plugin that marks how securely each incoming mail was transported: it reads the `X-Transport-Security` header (stamped by the mailservice MX) for the opened message and shows a red «UNENCRYPTED» banner for a cleartext hop, orange for an obsolete TLS version, and nothing for TLS 1.2+. The plugin is bundled in the image and installed into the data volume + enabled by an init container (`Dockerfile.plugin-init` / `install-plugins.sh`). Pinned by e2e tests (`test_webui.py`): the red banner appears for a plaintext-delivered mail and is absent for a TLS-submitted one.
 
 - 2026-07-18 **security hardening**
-    - Release-signature verification now covers BOTH images: the nginx
-      image serves the complete static tree — all JavaScript the
-      browser executes — and previously downloaded the tarball without
-      any check. Both builds now verify the OpenPGP signature against
-      the pinned key and refuse the placeholder without the documented
-      test escape hatch. Pinned by the new build-verification test
-      suite (`npm test`).
-    - The release-tag discovery aborts the build on an HTTP error or
-      an empty tag instead of downloading from a half-built URL.
-    - The standalone compose example persisted the data volume at the
-      wrong path (`/app/snappymail/data` instead of `/app/data`) —
-      configuration and accounts were lost on recreate; corrected.
-    - `npm start` / `npm test` work as documented (the package
-      scripts were missing).
+    - Release-signature verification now covers BOTH images: the nginx image serves the complete static tree — all JavaScript the browser executes — and previously downloaded the tarball without any check. Both builds now verify the OpenPGP signature against the pinned key and refuse the placeholder without the documented test escape hatch. Pinned by the new build-verification test suite (`npm test`).
+    - The release-tag discovery aborts the build on an HTTP error or an empty tag instead of downloading from a half-built URL.
+    - The standalone compose example persisted the data volume at the wrong path (`/app/snappymail/data` instead of `/app/data`) — configuration and accounts were lost on recreate; corrected.
+    - `npm start` / `npm test` work as documented (the package scripts were missing).
 
 - 2026-07-18 **build escape hatch**
-    - The build now accepts an optional `SKIP_GPG_VERIFY` build
-      argument. It is empty by default, so release-signature
-      verification stays fully enforced; only automated test harnesses
-      set it to bypass the check when they ship a placeholder signing
-      key.
+    - The build now accepts an optional `SKIP_GPG_VERIFY` build argument. It is empty by default, so release-signature verification stays fully enforced; only automated test harnesses set it to bypass the check when they ship a placeholder signing key.
 
 - 2026-07-17 **OpenPGP**
-    - New: OpenPGP in webmail — the php-gnupg extension together with
-      the gpg program is included in the image; verifying signed mail,
-      signing/encrypting your own mail now works out of the box
-      without any extra installation.
-    - New: verification of the OpenPGP signature of the downloaded
-      SnappyMail release tarball during the Docker build. The public
-      key is pinned in the repo as `snappymail-signing-key.asc`; the
-      build aborts as soon as either of the two checks fails
-      (placeholder still active, gpg import broken, signature does not
-      match the tarball).
-    - README explains how to fetch the real key, verify it against the
-      project fingerprint and commit it — including rotation and a
-      note that reverting to the placeholder is a security incident.
+    - New: OpenPGP in webmail — the php-gnupg extension together with the gpg program is included in the image; verifying signed mail, signing/encrypting your own mail now works out of the box without any extra installation.
+    - New: verification of the OpenPGP signature of the downloaded SnappyMail release tarball during the Docker build. The public key is pinned in the repo as `snappymail-signing-key.asc`; the build aborts as soon as either of the two checks fails (placeholder still active, gpg import broken, signature does not match the tarball).
+    - README explains how to fetch the real key, verify it against the project fingerprint and commit it — including rotation and a note that reverting to the placeholder is a security incident.
 
 - 2026-06-12 **fixes**
-    - PHP error output disabled in the FPM pool, so deprecation
-      warnings no longer corrupt the JSON interface of the
-      administration area and no longer prevent login.
+    - PHP error output disabled in the FPM pool, so deprecation warnings no longer corrupt the JSON interface of the administration area and no longer prevent login.
     - Environment variables are passed through to the FPM worker.
-    - Data directory volume corrected to the proper path, so
-      configuration and accounts are retained permanently.
+    - Data directory volume corrected to the proper path, so configuration and accounts are retained permanently.
