@@ -120,44 +120,26 @@ RUN GNUPG_PHP=$(ls /app/snappymail/v/*/app/libraries/snappymail/pgp/gnupg.php) \
 # resolve it; fail loudly if the layout ever changes.
 RUN $ALLOW_USER /app/data
 
-# php-gnupg extension for SnappyMail's server-side OpenPGP support
-# (message signing/verification/encryption in the webmail). Alpine
-# ships no pecl-gnupg package for this PHP and the PECL channel serves
-# no release metadata, so the extension is compiled from the pinned
-# upstream release against whichever PHP the base image carries — the
-# version is read from the file system, never written out. gpgme, which
-# the extension wraps, execs the gpg binary at runtime, so the gpg CLI
-# plus its full shared-library closure comes along. musl's `ldd`
-# accepts one file per call, hence the loop.
+# php-gnupg for SnappyMail's server-side OpenPGP, compiled against the PHP
+# of mwaeckerlin/php-fpm; gpgme execs the gpg binary, so it comes along.
+FROM php:fpm-alpine AS gnupg
 ARG PHP_GNUPG_VERSION=1.5.4
-# Source: the release tarball from pecl.php.net/get/ (the channel
-# metadata is broken for this package, the direct download works and
-# — unlike the GitHub archive tarball — bundles the `phpc` submodule
-# the build needs).
-# Alpine has no unversioned `php-dev`, so the version is resolved the way
-# the php-fpm base image does it: install the unversioned `php-fpm`
-# package (that name exists and pulls the current PHP), read the version
-# off the file system, then name the versioned packages and paths with it.
-RUN $PKG_INSTALL php-fpm \
-    && PHP_VERSION="$(ls -d /var/log/php* | sed 's,/var/log/php,,')" \
-    && $PKG_INSTALL "php${PHP_VERSION}-dev" \
-        gpgme-dev autoconf gcc make musl-dev gnupg curl \
-    && curl -fsSL "https://pecl.php.net/get/gnupg-${PHP_GNUPG_VERSION}.tgz" \
-        -o /tmp/php-gnupg.tar.gz \
+RUN apk add --no-cache gpgme-dev autoconf gcc make musl-dev gnupg curl \
+    && curl -fsSL "https://pecl.php.net/get/gnupg-${PHP_GNUPG_VERSION}.tgz" -o /tmp/php-gnupg.tar.gz \
     && mkdir -p /tmp/php-gnupg \
     && tar xf /tmp/php-gnupg.tar.gz -C /tmp/php-gnupg \
     && cd "/tmp/php-gnupg/gnupg-${PHP_GNUPG_VERSION}" \
-    && "phpize${PHP_VERSION}" \
-    && ./configure --with-php-config="/usr/bin/php-config${PHP_VERSION}" \
+    && phpize \
+    && ./configure \
     && make -j"$(nproc)" \
     && make install \
-    && echo "extension=gnupg.so" > "/etc/php${PHP_VERSION}/conf.d/60_gnupg.ini" \
+    && docker-php-ext-enable gnupg \
     && mkdir -p /root/gnupg \
     && tar cph \
-        "/usr/lib/php${PHP_VERSION}/modules/gnupg.so" \
-        "/etc/php${PHP_VERSION}/conf.d/60_gnupg.ini" \
+        "$(php-config --extension-dir)/gnupg.so" \
+        /usr/local/etc/php/conf.d/docker-php-ext-gnupg.ini \
         /usr/bin/gpg /usr/bin/gpg-agent /usr/bin/gpgconf \
-        $(for f in "/usr/lib/php${PHP_VERSION}/modules/gnupg.so" \
+        $(for f in "$(php-config --extension-dir)/gnupg.so" \
                    /usr/bin/gpg /usr/bin/gpg-agent /usr/bin/gpgconf; do \
               ldd "$f" 2>/dev/null | sed -n 's,.* => \([^ ]*\) .*,\1,p'; \
           done | sort -u) \
@@ -165,7 +147,7 @@ RUN $PKG_INSTALL php-fpm \
 
 FROM mwaeckerlin/php-fpm AS php-fpm
 COPY --from=build /app /app
-COPY --from=build /root/gnupg/ /
+COPY --from=gnupg /root/gnupg/ /
 # SnappyMail loads plugins from the DATA directory
 # (APP_PLUGINS_PATH = <data>/_data_/_default_/plugins/), a mounted
 # volume at runtime — so the plugin ships at a non-volume staging path
