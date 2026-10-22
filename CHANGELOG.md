@@ -1,5 +1,8 @@
 # Changelog
 
+- 2026-10-22 **3.5.6**
+    - The weekly run also rebuilds the version line 2, `mwaeckerlin/snappymail:php-fpm-2` and `nginx-2`, so it gets the security fixes of its base images like the line 1
+
 - 2026-10-22 **3.5.5**
     - The init container sets the admin password from `SNAPPYMAIL_ADMIN_PASSWORD`, stored as a bcrypt hash
     - With `DOMAIN`, it writes the IMAP and SMTP server of that mail domain from `IMAP_HOST`, `IMAP_PORT`, `IMAP_SECURE`, `SMTP_HOST`, `SMTP_PORT` and `SMTP_SECURE`, so a new deployment no longer needs the admin interface for it
