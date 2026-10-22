@@ -1,5 +1,8 @@
 # Changelog
 
+- 2026-10-22 **3.5.7**
+    - The version line 3 is published as `mwaeckerlin/snappymail:php-fpm-3` and `nginx-3` from the branch `3`, which the weekly run rebuilds like the lines 1 and 2; before, the line 3 had no tag of its own
+
 - 2026-10-22 **3.5.6**
     - The weekly run also rebuilds the version line 2, `mwaeckerlin/snappymail:php-fpm-2` and `nginx-2`, so it gets the security fixes of its base images like the line 1
 
