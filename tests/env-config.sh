@@ -50,7 +50,10 @@ _read() {
 
 _expect_line() {
     local name="$1" file="$2" want="$3"
-    if _read "${file}" | grep -qxF "${want}"; then
+    # grep reads the whole file: grep -q stops at the first match, cat then dies on SIGPIPE and pipefail fails the check
+    local content
+    content=$(_read "${file}")
+    if grep -qxF "${want}" <<<"${content}"; then
         _pass "${name}"
     else
         _fail "${name}" "no line '${want}' in ${file}: $(_read "${file}")"

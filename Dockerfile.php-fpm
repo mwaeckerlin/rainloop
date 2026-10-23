@@ -56,8 +56,13 @@ RUN if [ -z "$SKIP_GPG_VERIFY" ]; then \
 # signature, then hard-verify. Every failure point is a separate `-e`-
 # guarded step. curl `-f` turns any non-2xx into a build failure; gpg
 # `--verify` exits 1 on mismatch.
-RUN LATEST=$(curl -fsSI https://github.com/the-djmaze/snappymail/releases/latest \
-        | sed -n 's|.*location:.*/tag/v\([^[:space:]]*\).*|\1|p') \
+RUN for v in $(curl -fsS https://github.com/the-djmaze/snappymail/releases.atom \
+            | sed -n 's|.*/releases/tag/v\([^"<]*\)".*|\1|p'); do \
+        if curl -fsSIL -o /dev/null "https://github.com/the-djmaze/snappymail/releases/download/v${v}/snappymail-${v}.tar.gz"; then \
+            LATEST="$v"; break; \
+        fi; \
+        echo "**** SnappyMail v${v} carries no tarball, trying the release before"; \
+    done \
     && test -n "$LATEST" \
     && echo "**** SnappyMail latest release: v${LATEST}" \
     && curl -fsSL "https://github.com/the-djmaze/snappymail/releases/download/v${LATEST}/snappymail-${LATEST}.tar.gz"     -o /tmp/snappymail.tar.gz \
