@@ -1,3 +1,11 @@
+2026-10-24  Marc Wäckerlin
+
+	* Der Build nimmt das neueste SnappyMail-Release, dessen Tarball sich
+	  herunterladen lässt. v2.38.2.1 erschien ohne Dateien, releases/latest
+	  zeigte darauf, und jeder Build brach mit 404 ab; ein Release, dessen
+	  Dateien noch fehlen, wird übersprungen, bis sie da sind.
+	* Das nginx-Image baut ohne Warnung der Docker-Build-Prüfungen.
+
 2026-10-22  Marc Wäckerlin
 
 	* Die Versionslinie 2 wird wieder gebaut und veröffentlicht, als
