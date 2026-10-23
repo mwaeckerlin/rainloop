@@ -90,7 +90,7 @@ The php-fpm image ships the `php-gnupg` extension plus the `gpg` binary it drive
 
 ## Verifying the pinned SnappyMail signing key
 
-Every SnappyMail release published on [github.com/the-djmaze/snappymail](https://github.com/the-djmaze/snappymail/releases) ships a detached OpenPGP signature (`snappymail-<version>.tar.gz.asc`). BOTH images refuse to build a tarball that does not verify against the pinned public key in `rainloop/snappymail-signing-key.asc` — `Dockerfile.php-fpm` (the backend) and `Dockerfile.nginx` (the static tree, i.e. all JavaScript the browser executes). Pinned by `tests/build-verification.sh` (`npm test`).
+Every SnappyMail release published on [github.com/the-djmaze/snappymail](https://github.com/the-djmaze/snappymail/releases) ships a detached OpenPGP signature (`snappymail-<version>.tar.gz.asc`). BOTH images refuse to build a tarball that does not verify against the pinned public key in `rainloop/snappymail-signing-key.asc` — `Dockerfile.php-fpm` (the backend) and `Dockerfile.nginx` (the static tree, i.e. all JavaScript the browser executes). Pinned by `tests/build-verification.sh` (`npm test`). The build takes the newest release of the project's release feed whose tarball is downloadable; a release published before its files is skipped until they are there.
 
 The repository ships a **placeholder** file. Before the image builds the first time, replace it with the real public key:
 

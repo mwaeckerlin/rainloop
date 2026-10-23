@@ -1,5 +1,9 @@
 # Changelog
 
+- 2026-10-24 **3.5.7**
+    - The build takes the newest SnappyMail release that carries its tarball: v2.38.2.1 was published without any file, `releases/latest` pointed at it and every build failed with 404; a release whose files are still missing is skipped until they are there
+    - The test of the settings from the environment no longer fails at random: it piped the stored file into `grep -q`, which failed whenever `grep` stopped reading first and `cat` died on the closed pipe
+
 - 2026-10-22 **3.5.6**
     - The weekly run also rebuilds the version line 2, `mwaeckerlin/snappymail:php-fpm-2` and `nginx-2`, so it gets the security fixes of its base images like the line 1
 
