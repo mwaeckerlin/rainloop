@@ -1,5 +1,8 @@
 # Changelog
 
+- 2026-10-30 **3.5.9**
+    - The init container configures ManageSieve for the mail domain from `SIEVE_HOST`, `SIEVE_PORT` (default 4190) and `SIEVE_SECURE`, and the host alone allows sieve scripts for that domain. A domain without it offers no filter settings in the webmail, so a user can write no filter at all
+
 - 2026-10-23 **3.5.8**
     - The build takes the newest SnappyMail release that carries its tarball: v2.38.2.1 was published without any file, `releases/latest` pointed at it and every build failed with 404; a release whose files are still missing is skipped until they are there
     - The test of the settings from the environment no longer fails at random: it piped the stored file into `grep -q`, which failed whenever `grep` stopped reading first and `cat` died on the closed pipe

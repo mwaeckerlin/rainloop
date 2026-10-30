@@ -42,6 +42,7 @@ Default admin credentials:
 In the admin panel → *Domains* → *Add domain*:
 - IMAP host: your dovecot hostname, port 143 (or 993 for TLS)
 - SMTP host: your postfix hostname, port 25 (or 587 for submission)
+- SIEVE tab → *Allow sieve scripts*, host: your dovecot hostname, port 4190 — the filter settings of the webmail stay hidden until this is on
 
 
 ### Configuration by environment
@@ -51,11 +52,13 @@ The init container built from `Dockerfile.plugin-init` (see «Transport-security
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `SNAPPYMAIL_ADMIN_PASSWORD` | — (unchanged) | Password of the admin panel, stored as a bcrypt hash in `application.ini`. |
-| `DOMAIN` | — | Mail domain whose servers the variables below set, in `domains/<DOMAIN>.ini`. Without it the six variables below are ignored. |
+| `DOMAIN` | — | Mail domain whose servers the variables below set, in `domains/<DOMAIN>.ini`. Without it every variable below is ignored. |
 | `IMAP_HOST` / `IMAP_PORT` | — (unchanged) | IMAP server of `DOMAIN`, for example `dovecot` and `143`. |
 | `IMAP_SECURE` | — (unchanged) | `None`, `SSL` (implicit TLS, port 993) or `TLS` (STARTTLS). |
 | `SMTP_HOST` / `SMTP_PORT` | — (unchanged) | SMTP server of `DOMAIN`, for example `postfix` and `587`. |
 | `SMTP_SECURE` | — (unchanged) | `None`, `SSL` or `TLS`, as for IMAP. |
+| `SIEVE_HOST` / `SIEVE_PORT` | — (unchanged) / `4190` | ManageSieve server of `DOMAIN`, for example `dovecot` and `4190`. Setting the host also allows sieve scripts for the domain: without that the webmail shows no filter screen, so a user can write no filter at all. |
+| `SIEVE_SECURE` | — (unchanged) | `None`, `SSL` or `TLS`, as for IMAP. |
 
 A value that is set wins over a change in the admin panel at the next start. Pinned by `tests/env-config.sh` (`npm test`), which runs the init container against a fresh volume with and without the variables and verifies the stored password with PHP's `password_verify()`.
 

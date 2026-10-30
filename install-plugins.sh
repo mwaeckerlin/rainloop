@@ -18,6 +18,11 @@
 # IMAP_HOST, IMAP_PORT, IMAP_SECURE  IMAP server of DOMAIN
 # SMTP_HOST, SMTP_PORT, SMTP_SECURE  SMTP server of DOMAIN
 #                            (*_SECURE: None, SSL or TLS)
+# SIEVE_HOST, SIEVE_PORT, SIEVE_SECURE  ManageSieve server of DOMAIN.
+#                            Setting SIEVE_HOST switches the filter
+#                            settings of the webmail on; without it the
+#                            user sees no filter screen at all.
+#                            SIEVE_PORT defaults to 4190.
 set -eu
 
 DATA="${SNAPPYMAIL_DATA:-/app/data}"
@@ -65,12 +70,15 @@ case "${SNAPPYMAIL_ADMIN_PASSWORD:-}" in
 "*) die_invalid SNAPPYMAIL_ADMIN_PASSWORD ;;
 esac
 check DOMAIN    '[!A-Za-z0-9.-]'
-check IMAP_HOST '[!A-Za-z0-9._-]'
-check SMTP_HOST '[!A-Za-z0-9._-]'
+check IMAP_HOST  '[!A-Za-z0-9._-]'
+check SMTP_HOST  '[!A-Za-z0-9._-]'
+check SIEVE_HOST '[!A-Za-z0-9._-]'
 check_port IMAP_PORT
 check_port SMTP_PORT
+check_port SIEVE_PORT
 check_secure IMAP_SECURE
 check_secure SMTP_SECURE
+check_secure SIEVE_SECURE
 
 # set_ini FILE SECTION KEY VALUE: set KEY = "VALUE" inside [SECTION], or
 # at the top of FILE when SECTION is empty; every other line stays.
@@ -122,7 +130,9 @@ if [ -n "${DOMAIN:-}" ]; then
     mkdir -p "${DOMAINS}"
     DOMAIN_INI="${DOMAINS}/${DOMAIN}.ini"
     for setting in IMAP_HOST:imap_host IMAP_PORT:imap_port IMAP_SECURE:imap_secure \
-                   SMTP_HOST:smtp_host SMTP_PORT:smtp_port SMTP_SECURE:smtp_secure; do
+                   SMTP_HOST:smtp_host SMTP_PORT:smtp_port SMTP_SECURE:smtp_secure \
+                   SIEVE_HOST:sieve_host SIEVE_PORT:sieve_port \
+                   SIEVE_SECURE:sieve_secure; do
         var="${setting%%:*}"
         key="${setting#*:}"
         eval "value=\${${var}:-}"
@@ -130,6 +140,14 @@ if [ -n "${DOMAIN:-}" ]; then
         set_ini "${DOMAIN_INI}" "" "${key}" "${value}"
         echo "**** ${DOMAIN}: ${key} = ${value}"
     done
+    # A ManageSieve host is only reachable for the user once the domain
+    # allows sieve scripts — the webmail hides the whole filter screen
+    # otherwise, and the port falls back to dovecot's 4190.
+    if [ -n "${SIEVE_HOST:-}" ]; then
+        set_ini "${DOMAIN_INI}" "" sieve_use On
+        [ -n "${SIEVE_PORT:-}" ] || set_ini "${DOMAIN_INI}" "" sieve_port 4190
+        echo "**** ${DOMAIN}: sieve_use = On"
+    fi
 fi
 
 chown -R "${UID_OWNER}" "${DATA}"

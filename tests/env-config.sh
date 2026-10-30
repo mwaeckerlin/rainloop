@@ -123,7 +123,8 @@ _init -e SNAPPYMAIL_ADMIN_PASSWORD='first Pw!' -e DOMAIN=example.com
 _init -e SNAPPYMAIL_ADMIN_PASSWORD='s3cret Pw!' \
       -e DOMAIN=example.com \
       -e IMAP_HOST=dovecot -e IMAP_PORT=993 -e IMAP_SECURE=SSL \
-      -e SMTP_HOST=postfix -e SMTP_PORT=587 -e SMTP_SECURE=TLS
+      -e SMTP_HOST=postfix -e SMTP_PORT=587 -e SMTP_SECURE=TLS \
+      -e SIEVE_HOST=dovecot -e SIEVE_PORT=4190 -e SIEVE_SECURE=None
 _expect_password override_admin_password 's3cret Pw!'
 _expect_count override_one_admin_password configs/application.ini '^admin_password' 1
 _expect_count override_plugin_kept configs/application.ini '^enabled_list = "transport-security"$' 1
@@ -133,6 +134,12 @@ _expect_line override_imap_secure domains/example.com.ini 'imap_secure = "SSL"'
 _expect_line override_smtp_host   domains/example.com.ini 'smtp_host = "postfix"'
 _expect_line override_smtp_port   domains/example.com.ini 'smtp_port = "587"'
 _expect_line override_smtp_secure domains/example.com.ini 'smtp_secure = "TLS"'
+_expect_line override_sieve_host   domains/example.com.ini 'sieve_host = "dovecot"'
+_expect_line override_sieve_port   domains/example.com.ini 'sieve_port = "4190"'
+_expect_line override_sieve_secure domains/example.com.ini 'sieve_secure = "None"'
+# The host alone allows sieve scripts — without that the user sees no
+# filter screen in the webmail at all.
+_expect_line override_sieve_use    domains/example.com.ini 'sieve_use = "On"'
 
 # A key that is not set stays as the admin interface left it.
 _init -e DOMAIN=example.com -e IMAP_PORT=143
@@ -140,10 +147,24 @@ _expect_line partial_imap_port_replaced domains/example.com.ini 'imap_port = "14
 _expect_line partial_smtp_host_kept     domains/example.com.ini 'smtp_host = "postfix"'
 _expect_password partial_password_kept 's3cret Pw!'
 
+# SIEVE_HOST without a port: the port falls back to dovecot's 4190.
+_new_volume
+_init -e DOMAIN=example.com -e IMAP_HOST=dovecot -e SIEVE_HOST=dovecot
+_expect_line sieve_default_port domains/example.com.ini 'sieve_port = "4190"'
+_expect_line sieve_default_use  domains/example.com.ini 'sieve_use = "On"'
+
+# No SIEVE_HOST: nothing about sieve is written, the admin panel decides.
+_new_volume
+_init -e DOMAIN=example.com -e IMAP_HOST=dovecot
+_expect_count default_no_sieve domains/example.com.ini '^sieve_' 0
+
 _reject domain_traversal DOMAIN      "../../etc"
 _reject imap_host_quote  IMAP_HOST   'dovecot"; x = "y'
 _reject smtp_port_range  SMTP_PORT   "70000"
 _reject imap_secure_bad  IMAP_SECURE "STARTTLS"
+_reject sieve_host_quote SIEVE_HOST  'dovecot"; x = "y'
+_reject sieve_port_range SIEVE_PORT  "70000"
+_reject sieve_secure_bad SIEVE_SECURE "STARTTLS"
 _reject password_newline SNAPPYMAIL_ADMIN_PASSWORD $'pw\nadmin_login = "evil"'
 
 echo ""
