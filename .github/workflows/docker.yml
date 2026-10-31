@@ -1,8 +1,10 @@
 # Builds the images of the version line 1 for amd64 and arm64 and publishes
-# them on Docker Hub as mwaeckerlin/rainloop:php-fpm-1 and nginx-1, on every
-# push to this branch and once a week, when the run on master starts this
-# branch for the security fixes of the base images. The build itself is the
-# reusable workflow docker-image.yml of mwaeckerlin/scratch.
+# them on Docker Hub as mwaeckerlin/rainloop:php-fpm and nginx, and as
+# php-fpm-1 and nginx-1, on every push to this branch, and in the hourly check
+# that master starts on this branch when a parent image or a download changed
+# or the image is a week old. The rule of this branch appends no suffix, so
+# every image keeps the name the compose file gives it. The build itself is
+# the reusable workflow docker-image.yml of mwaeckerlin/scratch.
 
 name: docker
 
@@ -18,5 +20,5 @@ jobs:
   docker:
     uses: mwaeckerlin/scratch/.github/workflows/docker-image.yml@master
     with:
-      branch-tags: '[{"branch": "1", "suffix": "-1"}]'
+      branch-tags: '[{"branch": "1", "suffix": ""}]'
     secrets: inherit

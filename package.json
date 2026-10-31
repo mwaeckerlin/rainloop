@@ -1,12 +1,17 @@
 {
   "name": "@mwaeckerlin/snappymail",
-  "version": "1.11.2",
+  "version": "1.11.3",
   "scripts": {
     "build": "docker compose build",
     "start": "docker compose up --build --force-recreate --remove-orphans",
     "start:daemon": "docker compose up -d --build --force-recreate --remove-orphans",
+    "start:dev": "docker compose up --build --force-recreate --remove-orphans",
     "stop": "docker compose down",
-    "deploy": "docker compose push snappymail snappymail-proxy",
-    "test": "bash tests/config-contract.sh mwaeckerlin/rainloop:php-fpm"
+    "deploy": "docker compose push snappymail snappymail-proxy snappymail-1 snappymail-proxy-1",
+    "test": "npm run test:docs && npm run test:compose && npm run build && npm run test:config && npm run test:e2e",
+    "test:docs": "bash tests/docs-contract.sh",
+    "test:compose": "bash tests/compose-contract.sh",
+    "test:config": "bash tests/config-contract.sh mwaeckerlin/rainloop:php-fpm",
+    "test:e2e": "bash tests/e2e.sh mwaeckerlin/rainloop:php-fpm mwaeckerlin/rainloop:nginx"
   }
 }

@@ -6,7 +6,7 @@ services:
       target: nginx
       dockerfile: Dockerfile.nginx
     ports:
-      - 8080:8080
+      - "${BIND_ADDRESS:+${BIND_ADDRESS:-}:}8080:8080"
     networks:
       - frontend
 
@@ -19,10 +19,29 @@ services:
     volumes:
       - type: volume
         source: data
-        target: /app/snappymail/data
+        target: /app/data
     networks:
       - frontend
       - backend
+
+  # the two images above published once more as mwaeckerlin/rainloop:nginx-1
+  # and php-fpm-1, the names of the version line 1; no container is started
+  # from these services
+  snappymail-proxy-1:
+    image: mwaeckerlin/rainloop:nginx-1
+    build:
+      context: .
+      target: nginx
+      dockerfile: Dockerfile.nginx
+    scale: 0
+
+  snappymail-1:
+    image: mwaeckerlin/rainloop:php-fpm-1
+    build:
+      context: .
+      target: php-fpm
+      dockerfile: Dockerfile.php-fpm
+    scale: 0
 
   mysql:
     image: mariadb
