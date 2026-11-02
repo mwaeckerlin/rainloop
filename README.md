@@ -30,11 +30,13 @@ Store permanently:
 
 Open the admin panel at http://localhost:8080/?admin
 
-Default admin credentials:
-- User: `admin`
-- Password: `12345`
+The admin user is `admin`. SnappyMail generates the password on the first call of the admin panel, writes it to `_data_/_default_/admin_password.txt` in the data volume and stores its hash in `application.ini` (`ActionsAdmin.php`: twelve characters from `random_bytes(16)`). Read it there:
 
-**Important:** Change the admin password immediately!
+```sh
+docker compose exec snappymail cat /app/data/_data_/_default_/admin_password.txt
+```
+
+`SNAPPYMAIL_ADMIN_PASSWORD` sets a password of your own instead, before the first start (see «Configuration by environment» below). The admin panel keeps warning about a weak password as long as that file exists; changing the password in the panel removes it.
 
 
 ### IMAP / SMTP Server

@@ -19,9 +19,12 @@ concurrency: docker-${{ github.ref_name }}
 jobs:
   docker:
     uses: mwaeckerlin/scratch/.github/workflows/docker-image.yml@master
-    # the hourly check starts the version lines 1 (mwaeckerlin/rainloop:php-fpm-1
-    # and nginx-1), 2 and 3 (mwaeckerlin/snappymail:php-fpm-2, nginx-2,
-    # php-fpm-3 and nginx-3) as well
+    # the hourly check starts the version lines 1, 2 and 3 as well. Line 1
+    # publishes mwaeckerlin/rainloop:php-fpm-1 and nginx-1, and since its
+    # commit 59dface also mwaeckerlin/rainloop:php-fpm and nginx without a
+    # suffix, which is where a deployment of that line gets its patched PHP.
+    # Lines 2 and 3 publish mwaeckerlin/snappymail:php-fpm-2, nginx-2,
+    # php-fpm-3 and nginx-3
     permissions:
       actions: write
       contents: read

@@ -1,5 +1,9 @@
 # Changelog
 
+- 2026-11-01 **3.5.10**
+    - The README names the admin password the way SnappyMail sets it: generated on the first call of the admin panel, written to `admin_password.txt` in the data volume, with `SNAPPYMAIL_ADMIN_PASSWORD` as the way to set one of your own. There is no default `12345` any more, so an operator following the old text could not log in
+    - The comment of the build workflow names what the version line 1 publishes today: `rainloop:php-fpm` and `nginx` without a suffix beside `php-fpm-1` and `nginx-1`
+
 - 2026-10-30 **3.5.9**
     - The init container configures ManageSieve for the mail domain from `SIEVE_HOST`, `SIEVE_PORT` (default 4190) and `SIEVE_SECURE`, and the host alone allows sieve scripts for that domain. A domain without it offers no filter settings in the webmail, so a user can write no filter at all
 

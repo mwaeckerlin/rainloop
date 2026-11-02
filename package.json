@@ -1,6 +1,6 @@
 {
   "name": "@mwaeckerlin/snappymail",
-  "version": "3.5.9",
+  "version": "3.5.10",
   "scripts": {
     "build": "docker compose build",
     "start": "docker compose up --build --force-recreate --remove-orphans",
@@ -9,7 +9,8 @@
     "stop": "docker compose down",
     "deploy": "docker compose push snappymail snappymail-proxy",
     "build:unsigned": "SKIP_GPG_VERIFY=1 docker compose build",
-    "test": "bash tests/build-verification.sh && npm run build && bash tests/gnupg-contract.sh mwaeckerlin/snappymail:php-fpm && npm run test:env",
+    "test": "npm run test:docs && bash tests/build-verification.sh && npm run build && bash tests/gnupg-contract.sh mwaeckerlin/snappymail:php-fpm && npm run test:env",
+    "test:docs": "bash tests/docs-contract.sh",
     "test:env": "bash tests/env-config.sh"
   }
 }
